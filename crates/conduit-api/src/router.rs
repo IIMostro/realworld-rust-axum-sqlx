@@ -33,7 +33,11 @@ lazy_static! {
 pub struct ConduitApplicationController;
 
 impl ConduitApplicationController {
+
+
     pub async fn serve(port: u32, cors_origin: &str, service_register: ServiceRegister) -> anyhow::Result<()> {
+
+        // prometheus 监控
         let recorder_handle = PrometheusBuilder::new()
             .set_buckets_for_metric(
                 Matcher::Full(String::from("http_requests_duration_seconds")),
@@ -43,6 +47,7 @@ impl ConduitApplicationController {
             .install_recorder()
             .context("could not install metrics recorder")?;
 
+        // 路由配置
         let router = Router::new()
             .nest("/api", UsersRouter::new_router(service_register.clone()))
             .nest("/api", ProfilesRouter::new_router(service_register.clone()))
@@ -50,20 +55,24 @@ impl ConduitApplicationController {
             .nest("/api", TagsRouter::new_router(service_register))
             .route("/api/ping", get(Self::ping))
             .route("/metrics", get(move || ready(recorder_handle.render())))
+            // 中间件， 超时
             .layer(
                 ServiceBuilder::new()
                     .layer(TraceLayer::new_for_http())
                     .layer(HandleErrorLayer::new(Self::handle_timeout_error))
                     .timeout(Duration::from_secs(*HTTP_TIMEOUT)),
             )
+            // 中间件， cors
             .layer(
                 CorsLayer::new()
                     .allow_origin(cors_origin.parse::<HeaderValue>().unwrap())
                     .allow_methods([Method::GET]),
             )
+            // 中间件，监控
             .route_layer(middleware::from_fn(Self::track_metrics));
 
         info!("routes initialized, listening on port {}", port);
+        // 启动
         axum::Server::bind(&format!("0.0.0.0:{}", port).parse().unwrap())
             .serve(router.into_make_service())
             .await
@@ -93,7 +102,10 @@ impl ConduitApplicationController {
         }
     }
 
+    // 监控中间件
     async fn track_metrics<B>(request: Request<B>, next: Next<B>) -> impl IntoResponse {
+
+        // 获取 url
         let path = if let Some(matched_path) = request.extensions().get::<MatchedPath>() {
             matched_path.as_str().to_owned()
         } else {

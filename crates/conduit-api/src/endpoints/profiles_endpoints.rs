@@ -21,12 +21,14 @@ impl ProfilesRouter {
             .route("/profiles/:username", get(get_profile))
             .route("/profiles/:username/follow", post(follow_user))
             .route("/profiles/:username/follow", delete(unfollow_user))
+            // 注入service
             .layer(Extension(service_register.profiles_service))
             .layer(Extension(service_register.token_service))
     }
 }
 
 pub async fn get_profile(
+    // query 传值
     Path(params): Path<HashMap<String, String>>,
     Extension(profiles_service): Extension<DynProfilesService>,
     OptionalAuthentication(user_id): OptionalAuthentication,

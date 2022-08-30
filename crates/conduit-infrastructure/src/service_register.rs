@@ -42,8 +42,11 @@ pub struct ServiceRegister {
 
 /// A simple service container responsible for managing the various services our API endpoints will pull from through axum extensions.
 impl ServiceRegister {
+
+    // 服务注册
     pub fn new(pool: ConduitConnectionPool, config: Arc<AppConfig>) -> Self {
         info!("initializing utility services...");
+        // Arc创建出引用类型 只读
         let security_service = Arc::new(ArgonSecurityService::new(config.clone())) as DynSecurityService;
         let token_service = Arc::new(JwtService::new(config)) as DynTokenService;
 

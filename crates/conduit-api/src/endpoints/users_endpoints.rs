@@ -20,11 +20,13 @@ impl UsersRouter {
             .route("/users/login", post(UsersRouter::login_user_endpoint))
             .route("/user", get(UsersRouter::get_current_user_endpoint))
             .route("/user", put(UsersRouter::update_user_endpoint))
+            // 中间件，注入到下面的方法中
             .layer(Extension(service_register.users_service))
             .layer(Extension(service_register.token_service))
     }
 
     pub async fn register_user_endpoint(
+        // 校验参数
         ValidationExtractor(request): ValidationExtractor<RegisterUserRequest>,
         Extension(users_service): Extension<DynUsersService>,
     ) -> ConduitResult<Json<UserAuthenicationResponse>> {
@@ -40,6 +42,7 @@ impl UsersRouter {
     }
 
     pub async fn login_user_endpoint(
+        // 校验参数
         ValidationExtractor(request): ValidationExtractor<LoginUserRequest>,
         Extension(users_service): Extension<DynUsersService>,
     ) -> ConduitResult<Json<UserAuthenicationResponse>> {
@@ -54,6 +57,7 @@ impl UsersRouter {
     }
 
     pub async fn get_current_user_endpoint(
+        // 需要验证
         RequiredAuthentication(user_id): RequiredAuthentication,
         Extension(users_service): Extension<DynUsersService>,
     ) -> ConduitResult<Json<UserAuthenicationResponse>> {
@@ -67,6 +71,7 @@ impl UsersRouter {
     pub async fn update_user_endpoint(
         RequiredAuthentication(user_id): RequiredAuthentication,
         Extension(users_service): Extension<DynUsersService>,
+        // post application/json传值
         Json(request): Json<UpdateUserRequest>,
     ) -> ConduitResult<Json<UserAuthenicationResponse>> {
         info!("recieved request to update user {:?}", user_id);
