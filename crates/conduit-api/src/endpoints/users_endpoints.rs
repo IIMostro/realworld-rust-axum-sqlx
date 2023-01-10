@@ -21,6 +21,7 @@ impl UsersRouter {
             .route("/user", get(UsersRouter::get_current_user_endpoint))
             .route("/user", put(UsersRouter::update_user_endpoint))
             // 中间件，注入到下面的方法中
+            // 使用Extension<T> 来注入下面的方法，下面的方法可以使用Extension<T>来获取注入的值
             .layer(Extension(service_register.users_service))
             .layer(Extension(service_register.token_service))
     }

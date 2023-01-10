@@ -49,6 +49,7 @@ impl ConduitApplicationController {
 
         // 路由配置
         let router = Router::new()
+            // 这些地方会把service_register放进去
             .nest("/api", UsersRouter::new_router(service_register.clone()))
             .nest("/api", ProfilesRouter::new_router(service_register.clone()))
             .nest("/api", ArticlesRouter::new_router(service_register.clone()))

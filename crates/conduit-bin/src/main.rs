@@ -20,10 +20,13 @@ async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
     // 读取配置到config
+    // Arc引用计数， 多线程下无法确认对象什么时候销毁，所以需要对引用进行计数，当计数为0的时候可以释放
+    // 被Arc修饰的对象是无法修改的，底层是一个不可变对象，修改需要用到Mutex
     let config = Arc::new(AppConfig::parse());
 
     // 设置日志的格式
     tracing_subscriber::registry()
+        // 设置各个模块的日志级别， 格式为sqlx=debug,tower_http=debug
         .with(tracing_subscriber::EnvFilter::new(&config.rust_log))
         .with(tracing_subscriber::fmt::layer())
         .init();
